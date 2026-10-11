@@ -4,6 +4,16 @@
 
 I built this as part of Auricore's pricing and product-data infrastructure. Comparing luxury goods across marketplaces requires collecting inconsistent listings, extracting useful attributes, handling product images, and saving a consistent record for downstream matching and valuation.
 
+## What happens to a listing
+
+1. A site-specific adapter retrieves and extracts the listing.
+2. Categorization and parsing turn the source fields into a structured product record.
+3. Image utilities handle the associated product imagery.
+4. Storage code persists catalog records in DynamoDB and image objects in S3.
+5. Progress and failure tracking help inspect an incomplete or interrupted run.
+
+Collecting a listing and proving that it is the same product as another listing are separate tasks. This repository handles ingestion; the linked canonicalization project handles downstream matching and enrichment.
+
 ## Pipeline
 
 ```mermaid
@@ -55,6 +65,6 @@ This is historical source. Provider APIs, available model IDs and marketplace ma
 
 [Product Canonicalization](https://github.com/Jaiashar/product-canonicalization) resolves and enriches product records downstream. [Auricore Web](https://github.com/Jaiashar/auricore-web) presents item identification and market-price research to users.
 
-## Provenance and validation
+## Authorship and validation
 
 See [PROVENANCE.md](PROVENANCE.md) for the original revision and publication changes. Source syntax and the synthetic offline example are checked; live scraping, AI calls and AWS writes are not part of this validation.
