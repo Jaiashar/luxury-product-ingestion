@@ -37,6 +37,43 @@ The historical source includes adapters for The RealReal, Vestiaire Collective, 
 | Image handling | [optimized_image_handler.py](scraper/utils/optimized_image_handler.py) |
 | Catalog and image storage | [optimized_aws_storage.py](optimized_aws_storage.py) |
 
+## Data contracts and serialization
+
+The pipeline uses Pydantic models to separate scraped fields from stored records. [Product](scraper/utils/data_models.py) contains `product_id`, brand, model, SKU values, category, product name, source URLs, and image objects. [ProductImage](scraper/utils/data_models.py) holds image identity and location metadata. `ScrapingProgress` records completed sites, found/processed/stored counts, failed URLs, and a timestamp.
+
+```mermaid
+classDiagram
+    class Product {
+        string product_id
+        string brand
+        string model
+        list sku
+        list source_url
+        to_dict()
+        to_db_dict()
+    }
+    class ProductImage {
+        string image_id
+        string url
+        string local_path
+        string s3_key
+    }
+    class ScrapingProgress {
+        string brand
+        list sites_completed
+        int products_processed
+        int products_stored
+        list failed_urls
+    }
+    Product "1" --> "many" ProductImage : images
+```
+
+Serialization is explicit. `Product.to_dict()` produces nested image records, while `to_db_dict()` serializes SKU and source-URL lists as JSON strings and retains image IDs. `ProductImage.to_dict()` does not emit its S3 fields, even though those fields exist on the model. Reading the serializer is therefore necessary before assuming every in-memory field reaches storage.
+
+## Operational behavior
+
+Site adapters isolate marketplace-specific extraction. Categorization, image handling, and AWS persistence sit in separate modules so a change in one site's markup does not need to redefine the product contract. Progress counters distinguish finding a listing from successfully storing it; failed URLs remain visible for inspection. This is useful operational structure, but it does not establish exactly-once ingestion or an atomic transaction across DynamoDB and S3.
+
 ## Try the data model offline
 
 ```sh
